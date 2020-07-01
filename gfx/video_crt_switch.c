@@ -219,10 +219,21 @@ void crt_switch_res_core(
 
    if (crt_mode == 2)
    {
-      if (hz > 53)
+      /*if (hz > 53)
          p_switch->ra_core_hz      = hz * 2;
       if (hz <= 53)
-         p_switch->ra_core_hz      = 120.0f;
+         p_switch->ra_core_hz      = 120.0f;*/
+      while(height < 400)
+      {
+         height *= 2;
+         p_switch->ra_core_height = height;
+      }
+
+      while(width < 640)
+      {
+         width *= 2;
+         p_switch->ra_core_width = width;
+      }
    }
 
    /* Detect resolution change and switch */

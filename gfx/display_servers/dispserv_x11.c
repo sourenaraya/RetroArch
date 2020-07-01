@@ -186,7 +186,7 @@ static bool x11_display_server_set_resolution(void *data,
    float pixel_clock        = 0;
 
    crt_en = true;
-   crt_name_id += 1;
+   crt_name_id = 0;
    snprintf(crt_name, sizeof(crt_name), "CRT%d", crt_name_id);
    snprintf(old_mode, sizeof(old_mode), "%s", new_mode);
 
@@ -246,17 +246,19 @@ static bool x11_display_server_set_resolution(void *data,
 
    vbp = vmax;
 
-   if (height < 300)
+   //if (height < 300)
       pixel_clock = (hmax * vmax * hz) / 1000000;
-   if (height > 300)
-      pixel_clock = ((hmax * vmax * hz) / 1000000) / 2;
+   //if (height > 300)
+   //   pixel_clock = ((hmax * vmax * hz) / 1000000) / 2;
    /* above code is the modeline generator */
 
-   /* create interlaced newmode from modline variables */
+   /* create progressive newmode from modline variables */
    if (height < 300)
    {
       snprintf(xrandr, sizeof(xrandr),
-            "xrandr --newmode \"%s_%dx%d_%0.2f\" %f %d %d %d %d %d %d %d %d -hsync -vsync",
+            "xrandr --newmode \"%s_%dx%d_%0.3f\" %f %d %d %d %d %d %d %d %d -hsync -vsync",
+            crt_name, width, height, hz, pixel_clock, width, hfp, hsp, hbp, height, vfp, vsp, vbp);
+      printf("[DEBUG] creating mode: \"%s_%dx%d_%0.3f\" %f %d %d %d %d %d %d %d %d -hsync -vsync\n",
             crt_name, width, height, hz, pixel_clock, width, hfp, hsp, hbp, height, vfp, vsp, vbp);
       system(xrandr);
    }
@@ -265,13 +267,15 @@ static bool x11_display_server_set_resolution(void *data,
    if (height > 300)
    {
       snprintf(xrandr, sizeof(xrandr),
-            "xrandr --newmode \"%s_%dx%d_%0.2f\" %f %d %d %d %d %d %d %d %d interlace -hsync -vsync",
+            "xrandr --newmode \"%s_%dx%d_%0.3f\" %f %d %d %d %d %d %d %d %d -hsync -vsync",
+            crt_name, width, height, hz, pixel_clock, width, hfp, hsp, hbp, height, vfp, vsp, vbp);
+      printf("[DEBUG] creating mode: \"%s_%dx%d_%0.3f\" %f %d %d %d %d %d %d %d %d -hsync -vsync\n",
             crt_name, width, height, hz, pixel_clock, width, hfp, hsp, hbp, height, vfp, vsp, vbp);
       system(xrandr);
    }
 
    /* variable for new mode */
-   snprintf(new_mode, sizeof(new_mode), "%s_%dx%d_%0.2f", crt_name, width, height, hz);
+   snprintf(new_mode, sizeof(new_mode), "%s_%dx%d_%0.3f", crt_name, width, height, hz);
 
    /* need to run loops for DVI0 - DVI-2 and VGA0 - VGA-2 outputs to
     * add and delete modes */
@@ -305,18 +309,22 @@ static bool x11_display_server_set_resolution(void *data,
             snprintf(xrandr, sizeof(xrandr),
                   "xrandr --addmode \"%s\" \"%s\"",
                   outputs->name, new_mode);
+            printf("[DEBUG] Adding modeline %s to %s\n", new_mode, outputs->name);
             system(xrandr);
             snprintf(xrandr, sizeof(xrandr),
                   "xrandr --output \"%s\" --mode \"%s\"",
                   outputs->name, new_mode);
+            printf("[DEBUG] setting output %s to mode %s\n", outputs->name, new_mode);
             system(xrandr);
             snprintf(xrandr, sizeof(xrandr),
                   "xrandr --delmode \"%s\" \"%s\"",
                   outputs->name, old_mode);
+            printf("[DEBUG] Removing modeline %s from %s\n", old_mode, outputs->name);
             system(xrandr);
             snprintf(xrandr, sizeof(xrandr),
                   "xrandr --rmmode \"%s\"",
                   old_mode);
+            printf("[DEBUG] Deleting modeline %s\n", old_mode);
             system(xrandr);
          }
       }
@@ -332,18 +340,22 @@ static bool x11_display_server_set_resolution(void *data,
          snprintf(xrandr, sizeof(xrandr),
                "xrandr --addmode \"%s\" \"%s\"",
                outputs->name, new_mode);
+         printf("[DEBUG] Adding modeline %s to %s\n", new_mode, outputs->name);
          system(xrandr);
          snprintf(xrandr, sizeof(xrandr),
                "xrandr --output \"%s\" --mode \"%s\"",
                outputs->name, new_mode);
+         printf("[DEBUG] setting output %s to mode %s\n", outputs->name, new_mode);
          system(xrandr);
          snprintf(xrandr, sizeof(xrandr),
                "xrandr --delmode \"%s\" \"%s\"",
                outputs->name, old_mode);
+         printf("[DEBUG] Removing modeline %s from %s\n", old_mode, outputs->name);
          system(xrandr);
          snprintf(xrandr, sizeof(xrandr),
                "xrandr --rmmode \"%s\"",
                old_mode);
+         printf("[DEBUG] Deleting modeline %s\n", old_mode);
          system(xrandr);
       }
    }
@@ -353,6 +365,7 @@ static bool x11_display_server_set_resolution(void *data,
 
 const char *x11_display_server_get_output_options(void *data)
 {
+// return "HDMI1";
 #ifdef HAVE_XRANDR
    Display *dpy;
    XRRScreenResources *res;
